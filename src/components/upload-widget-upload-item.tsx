@@ -2,6 +2,7 @@ import { Indicator, Root } from "@radix-ui/react-progress";
 import { Download, ImageUp, Link2, RefreshCcw, X } from "lucide-react";
 import { motion } from "motion/react";
 import { type Upload, useUploads } from "../store/uploads";
+import { downloadUrl } from "../utils/download-url";
 import { formatBytes } from "../utils/format-bytes";
 import { limitFileName } from "../utils/limit-format";
 import { Button } from "./ui/button";
@@ -16,9 +17,14 @@ export function UploadWidgetUploadItem({
   uploadId,
 }: UploadWidgetUploadItemProps) {
   const cancelUpload = useUploads((store) => store.cancelUpload);
+  const retryUpload = useUploads((store) => store.retryUpload);
 
   const progress = Math.min(
-    Math.round((upload.uploadSizeInBytes * 100) / upload.originalSizeInBytes),
+    upload.compressSizeInBytes
+      ? Math.round(
+          (upload.uploadSizeInBytes * 100) / upload.compressSizeInBytes
+        )
+      : 0,
     100
   );
 
@@ -41,8 +47,18 @@ export function UploadWidgetUploadItem({
           </span>
           <div className="size-1 rounded-full bg-zinc-700" />
           <span>
-            {upload.uploadSizeInBytes}
-            <span className="ml-1 text-green-400">-94%</span>
+            {formatBytes(upload.compressSizeInBytes ?? 0)}
+            {upload.compressSizeInBytes && (
+              <span className="ml-1 text-green-400">
+                -
+                {Math.round(
+                  ((upload.originalSizeInBytes - upload.compressSizeInBytes) *
+                    100) /
+                    upload.originalSizeInBytes
+                )}
+                %
+              </span>
+            )}
           </span>
           <div className="size-1 rounded-full bg-zinc-700" />
           {upload.status === "success" && <span>100%</span>}
@@ -69,17 +85,32 @@ export function UploadWidgetUploadItem({
         />
       </Root>
 
-      <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
-        <Button disabled={upload.status !== "success"} size="icon-sm">
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <Button
+          disabled={upload.status !== "success"}
+          onClick={() => {
+            if (upload.remoteUrl) {
+              downloadUrl(upload.remoteUrl);
+            }
+          }}
+          size="icon-sm"
+        >
           <Download className="size-4" strokeWidth={1.5} />
           <span className="sr-only">Download compress image</span>
         </Button>
-        <Button disabled={upload.status !== "success"} size="icon-sm">
+        <Button
+          aria-disabled={!upload.remoteUrl}
+          onClick={() =>
+            upload.remoteUrl && navigator.clipboard.writeText(upload.remoteUrl)
+          }
+          size="icon-sm"
+        >
           <Link2 className="size-4" strokeWidth={1.5} />
           <span className="sr-only">Copy remote URL</span>
         </Button>
         <Button
           disabled={!["canceled", "error"].includes(upload.status)}
+          onClick={() => retryUpload(uploadId)}
           size="icon-sm"
         >
           <RefreshCcw className="size-4" strokeWidth={1.5} />
