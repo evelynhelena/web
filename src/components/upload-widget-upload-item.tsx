@@ -17,6 +17,11 @@ export function UploadWidgetUploadItem({
 }: UploadWidgetUploadItemProps) {
   const cancelUpload = useUploads((store) => store.cancelUpload);
 
+  const progress = Math.min(
+    Math.round((upload.uploadSizeInBytes * 100) / upload.originalSizeInBytes),
+    100
+  );
+
   return (
     <motion.div
       animate={{ opacity: 1 }}
@@ -31,15 +36,17 @@ export function UploadWidgetUploadItem({
         </span>
 
         <span className="flex items-center gap-1.5 text-xxs text-zinc-400">
-          <span className="line-through">{formatBytes(upload.file.size)}</span>
+          <span className="line-through">
+            {formatBytes(upload.originalSizeInBytes)}
+          </span>
           <div className="size-1 rounded-full bg-zinc-700" />
           <span>
-            300KB
+            {upload.uploadSizeInBytes}
             <span className="ml-1 text-green-400">-94%</span>
           </span>
           <div className="size-1 rounded-full bg-zinc-700" />
           {upload.status === "success" && <span>100%</span>}
-          {upload.status === "progress" && <span>45%</span>}
+          {upload.status === "progress" && <span>{progress}%</span>}
           {upload.status === "error" && (
             <span className="text-red-400">Erro</span>
           )}
@@ -52,10 +59,13 @@ export function UploadWidgetUploadItem({
       <Root
         className="group h-1 overflow-hidden rounded-full bg-zinc-800"
         data-status={upload.status}
+        value={progress}
       >
         <Indicator
-          className="h-1 bg-indigo-500 group-data-[status=canceled]:bg-yellow-400 group-data-[status=error]:bg-red-400 group-data-[status=success]:bg-green-400"
-          style={{ width: upload.status === "progress" ? "45%" : "100%" }}
+          className="h-1 bg-indigo-500 transition-all group-data-[status=canceled]:bg-yellow-400 group-data-[status=error]:bg-red-400 group-data-[status=success]:bg-green-400"
+          style={{
+            width: upload.status === "progress" ? `${progress}%` : "100%",
+          }}
         />
       </Root>
 
