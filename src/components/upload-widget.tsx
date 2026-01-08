@@ -1,12 +1,13 @@
 import { Content, Root } from "@radix-ui/react-collapsible";
 import { motion, useCycle } from "motion/react";
+import { usePendingUploads } from "../store/uploads";
 import { UploadWidgetDropzone } from "./upload-widget-dropzone";
 import { UploadWidgetHeader } from "./upload-widget-header";
 import { UploadWidgetList } from "./upload-widget-list";
 import { UploadWidgetMinimizedButton } from "./upload-widget-minimized-button";
 
 export function UploadWidget() {
-  const isThereAnyPendingUpload = true;
+  const { isThereAnyPendingUpload } = usePendingUploads();
   const [isWidgetOpen, toaggleWidgetOpen] = useCycle(false, true);
 
   return (
